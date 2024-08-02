@@ -1,6 +1,6 @@
 <template>
-  <q-page class="flex flex-center">
-    <div v-if="!loggedIn" class="q-gutter-y-lg">
+  <q-page class="flex flex-center" >
+    <div v-if="!loggedIn" class="q-gutter-y-lg" style="width:80vw;">
         <div class="text-h4">
           Account
         </div>
@@ -20,8 +20,9 @@
           lazy-rules
           :rules="[val => (val && val.length >= 8) || 'Invalid password']"
         />
-        <div class="flex items-center justify-around">
+        <div class="flex items-center justify-around q-gutter-x-sm">
           <q-btn
+            style="width: 35vw;"
             rounded
             color="primary"
             label="Login"
@@ -29,6 +30,7 @@
             :disable="!(this.user.email && this.user.password && /.+@.+\..+/.test(this.user.email) && this.user.password.length >= 8)"
           />
           <q-btn
+            style="width: 35vw;"
             rounded
             color="primary"
             label="Register"
@@ -37,6 +39,7 @@
         </div>
       <q-separator />
       <q-btn
+        style="width: 80vw;"
         rounded
         icon="img:src/assets/google-logo.png"
         label="Login with Google"
@@ -44,7 +47,7 @@
       />
     </div>
 
-    <div v-else class="q-gutter-y-lg">
+    <div v-else class="q-gutter-y-lg" style="width:80vw;"> 
       <div class="text-h4">
         Account
       </div>
@@ -66,7 +69,7 @@
         label="Email"
         v-model="user.email"
       />
-      <div class="q-gutter-x-sm">
+      <div class="q-gutter-x-sm flex justify-around">
         <q-btn
           rounded
           color="primary"
@@ -74,6 +77,7 @@
           @click="changePassword"
         />
         <q-btn
+          style="width: 35vw;"
           rounded
           color="primary"
           label="Logout"
@@ -103,7 +107,6 @@ export default defineComponent({
   },
   methods: {
     login () {
-      console.log('login');
       this.user.email = 'test@test.it';
       this.user.name = 'Test';
       this.user.surname = 'Test';
@@ -111,7 +114,7 @@ export default defineComponent({
     },
     loginWithGoogle () {
       console.log('loginWithGoogle');
-      this.loggedIn = true;
+      this.login();
     },
     changePassword () {
       console.log('changePassword');
