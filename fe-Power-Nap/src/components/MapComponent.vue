@@ -1,11 +1,8 @@
 <template>
-  <q-page class="flex flex-center">
-    <div id="map" class="full-height full-width"></div>
-  </q-page>
+  <div id="map"></div>
 </template>
 
 <script>
-// Import MapLibre and AWS SDK
 import maplibregl from 'maplibre-gl';
 import AWS from 'aws-sdk';
 
@@ -15,11 +12,12 @@ export default {
     // Initialize AWS SDK
     AWS.config.update({
       region: 'eu-west-1',
-      credentials: new AWS.Credentials('', '')
+      credentials: new AWS.Credentials(`${process.env.AWS_SECRET_KEY}`, `${process.env.AWS_SECRET_ID}`)
     });
 
     const locationService = new AWS.Location();
-    const apiKey = "";
+
+    const apiKey =`${process.env.AWS_API_KEY}`;
     const mapName = "powernap";
     const region = "eu-west-1";
 
@@ -75,7 +73,7 @@ export default {
       }
 
       // Extract route coordinates
-      let coordinates = [];
+      var coordinates = [];
       data.Legs.forEach(leg => {
         leg.Steps.forEach(step => {
           coordinates.push(...step.StartPosition, ...step.EndPosition);
@@ -124,12 +122,12 @@ export default {
       console.log(`Total distance to the target: ${totalDistance.toFixed(2)} km`);
     });
   }
-};
+}
 </script>
 
 <style scoped>
 #map {
   height: 100vh;
-  width: 100%;
+  margin: 0;
 }
 </style>
