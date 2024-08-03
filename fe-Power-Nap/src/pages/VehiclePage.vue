@@ -3,7 +3,7 @@
     <div class="q-gutter-y-lg q-py-lg" style="width:80vw;">
       <div class="text-h4">Vehicles</div>
       <div v-for="(vehicle, index) in vehicles" :key="index">
-        <q-card>
+        <q-card style="border-radius: 10px;">
           <q-card-section>
             <div class="text-h6">{{ vehicle.name }}</div>
           </q-card-section>

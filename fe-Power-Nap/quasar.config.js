@@ -21,7 +21,7 @@ module.exports = configure(function (/* ctx */) {
     // --> boot files are part of "main.js"
     // https://v2.quasar.dev/quasar-cli-vite/boot-files
     boot: [
-      
+      'init',
       'axios',
     ],
 
@@ -70,13 +70,13 @@ module.exports = configure(function (/* ctx */) {
       // extendViteConf (viteConf) {},
       // viteVuePluginOptions: {},
 
-      vitePlugins: [
-        ['vite-plugin-checker', {
-          eslint: {
-            lintCommand: 'eslint "./**/*.{js,mjs,cjs,vue}"'
-          }
-        }, { server: false }]
-      ]
+      // vitePlugins: [
+      //   ['vite-plugin-checker', {
+      //     eslint: {
+      //       lintCommand: 'eslint "./**/*.{js,mjs,cjs,vue}"'
+      //     }
+      //   }, { server: false }]
+      // ]
     },
 
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#devServer

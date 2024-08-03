@@ -7,7 +7,7 @@
     <q-footer style="height: 8vh;">
       <q-tabs
         v-model="tab"
-        align="left"
+        align="center"
         class="text-white full-height"
         active-bg-color="white"
         active-color="primary"
