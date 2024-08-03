@@ -1,6 +1,6 @@
 <template>
   <q-page class="flex flex-center">
-    <MapComponent class="full-width" /> 
+    <MapComponent class="full-width" :starting_location="starting_location" :target_location="target_location"/> 
     <q-btn
       size="lg"
       round
@@ -135,6 +135,8 @@ export default defineComponent({
         socketType: '',
       },
       loading: false,
+      starting_location: [],
+      target_location: [],
     }
   },
   components: {
@@ -151,6 +153,7 @@ export default defineComponent({
       })
       .then(async response => {
         if(response.data){
+          this.target_location = [response.data.body[0], response.data.body[1]];
           //console.log("get-location result body: ", response.data.body);
           await this.$api.get('/get-charging-stations', {
             params: {
@@ -181,6 +184,7 @@ export default defineComponent({
     async getStationDetails(station) {
       //console.log(`Navigating to ${station.station_id} at ${station.location[0]}, ${station.location[1]}`);
       this.loading = true;
+      this.starting_location = [station.location[0], station.location[1]];
       await this.$api.get('/get-details-from-station', {
         params: {
           longitude: station.location[0],
