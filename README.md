@@ -1,6 +1,6 @@
-# PowerNap - EV Charging Station Platform
+# PowerNap - EV Charging Stations Finder
 
-Web/Mobile application to find the best EV charger based on distance from the destination, time of the stay, charger speed, electricity costs, current battery level, and the desired one.
+Web/Mobile application to find the best EV charger based on distance from the destination, time of stay, charger speed, electricity costs, current battery level, and the desired one.
 
 The algorithm uses a heuristic that allows calculating a score for each station as a weighted combination of some relevant information.
 
