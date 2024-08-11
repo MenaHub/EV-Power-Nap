@@ -10,7 +10,7 @@
 
 
 const { configure } = require('quasar/wrappers');
-const dotenv = require('dotenv');
+require('dotenv').config()
 
 module.exports = configure(function (/* ctx */) {
   return {
@@ -61,7 +61,11 @@ module.exports = configure(function (/* ctx */) {
       // publicPath: '/',
       // analyze: true,
       dotenv: true,
-      env: require('dotenv').config().parsed,
+      env: {
+        AWS_API_KEY: process.env.AWS_API_KEY,
+        AWS_SECRET_KEY: process.env.AWS_SECRET_KEY,
+        AWS_SECRET_ID: process.env.AWS_SECRET_ID
+      },
       // rawDefine: {}
       // ignorePublicFolder: true,
       // minify: false,

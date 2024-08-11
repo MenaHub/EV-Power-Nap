@@ -111,7 +111,6 @@
 <script>
 import { defineComponent } from 'vue';
 import MapComponent from 'components/MapComponent.vue';
-
 export default defineComponent({
   name: 'MapPage',
   data() {
@@ -146,10 +145,8 @@ export default defineComponent({
     async searchForChargingStations() {
       console.log('Searching for charging stations');
       this.loading = true;
-      await this.$api.get('/get-location', {
-        params: {
-          address: this.chargeInfo.destination.replaceAll(' ', '-').replaceAll(',', ''),
-        },
+      await this.$api.post('/get-location', {
+        address: this.chargeInfo.destination.replaceAll(' ', '-').replaceAll(',', '')
       })
       .then(async response => {
         if(response.data){
