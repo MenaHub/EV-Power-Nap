@@ -63,8 +63,8 @@ module.exports = configure(function (/* ctx */) {
       dotenv: true,
       env: {
         AWS_API_KEY: process.env.AWS_API_KEY,
-        AWS_SECRET_KEY: process.env.AWS_SECRET_KEY,
-        AWS_SECRET_ID: process.env.AWS_SECRET_ID
+        AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY,
+        AWS_SECRET_ACCESS_ID: process.env.AWS_SECRET_ACCESS_ID
       },
       // rawDefine: {}
       // ignorePublicFolder: true,
@@ -107,6 +107,7 @@ module.exports = configure(function (/* ctx */) {
       // Quasar plugins
       plugins: [
         'BottomSheet',
+        'Notify',
       ]
     },
 

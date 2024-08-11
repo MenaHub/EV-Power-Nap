@@ -18,7 +18,7 @@ export default {
     // Initialize AWS SDK
     AWS.config.update({
       region: 'eu-west-1',
-      credentials: new AWS.Credentials(`${process.env.AWS_SECRET_KEY}`, `${process.env.AWS_SECRET_ID}`)
+      credentials: new AWS.Credentials(`${process.env.AWS_SECRET_ACCESS_KEY}`, `${process.env.AWS_SECRET_ACCESS_ID}`)
     });
 
     this.locationService = new AWS.Location();
