@@ -8,8 +8,7 @@ import axios from 'axios'
 // "export default () => {}" function below (which runs individually
 // for each client)
 
-//TODO: Change the baseURL to the actual API URL
-const api = axios.create({ baseURL: /* 'https://powernap.alberto.fun', */ 'https://qvqmlb5vc0.execute-api.eu-south-1.amazonaws.com/v0' })
+const api = axios.create({ baseURL: 'https://powernap.alberto.fun' })
 
 export default boot(({ app }) => {
   // for use inside Vue files (Options API) through this.$axios and this.$api
