@@ -1,6 +1,11 @@
 <template>
   <q-page class="flex flex-center">
-    <MapComponent class="full-width" :starting_location="starting_location" :target_location="target_location"/> 
+    <MapComponent 
+      class="full-width" 
+      :starting_location="starting_location" 
+      :target_location="target_location" 
+      @totalDistance="setTotalDistance"
+    /> 
     <q-btn
       size="lg"
       round
@@ -143,7 +148,7 @@ export default defineComponent({
   },
   methods: {
     async searchForChargingStations() {
-      console.log('Searching for charging stations');
+      //console.log('Searching for charging stations');
       this.loading = true;
       await this.$api.post('/get-location', {
         address: this.chargeInfo.destination.replaceAll(' ', '-').replaceAll(',', '')
@@ -156,15 +161,24 @@ export default defineComponent({
             params: {
               latitude: response.data.body[1],
               longitude: response.data.body[0],
+              current_battery: this.chargeInfo.currentBatteryLevel,
+              desired_battery: this.chargeInfo.desiredBatteryLevel,
             },
           })
           .then(response => {
             if(response.data){
               //console.log("get-charging-stations result: ", response.data);
-              this.chargingStations = response.data.body;
+              this.chargingStations = response.data;
+              this.chargingStationDialogOpen = true;
             }
           })
           .catch(error => {
+            this.$q.notify({
+              color: 'negative',
+              message: 'Error while fetching charging stations',
+              position: 'top',
+              timeout: 3000,
+            });
             console.error(error);
           });
         }
@@ -175,46 +189,52 @@ export default defineComponent({
       .finally(() => {
         this.loading = false;
         this.searchDialogOpen = false;
-        this.chargingStationDialogOpen = true;
       });
     },
     async getStationDetails(station) {
       //console.log(`Navigating to ${station.station_id} at ${station.location[0]}, ${station.location[1]}`);
       this.loading = true;
-      this.starting_location = [station.location[0], station.location[1]];
       await this.$api.get('/get-details-from-station', {
         params: {
           longitude: station.location[0],
           latitude: station.location[1],
           current_battery: this.chargeInfo.currentBatteryLevel,
           desired_battery: this.chargeInfo.desiredBatteryLevel,
-          stationId: station.station_id,
+          station_id: station.station_id,
         },
       }).then(response => {
         if(response.data){
           //console.log("get-details-from-station result: ", response.data);
-          let body = response.data.body;
-          this.selectedStation = {
-            name: station.station_id,
-            location: [body.location.latitude, body.location.longitude],
-            provider: body.provider,
-            distance: body.distance.toFixed(2),
-            chargingTime: body.charging_time,
-            costPerHour: body.plugs[0].cost_per_kwh,
-            socketType: body.plugs[0].socket_type,
-          };
+          this.chargingStationDialogOpen = false;
+          var response = response.data;
+
+          this.selectedStation.name = station.station_id,
+          this.selectedStation.location = [response.location.latitude, response.location.longitude],
+          this.selectedStation.provider = response.provider,
+          //distance: response.distance.toFixed(2),
+          this.selectedStation.chargingTime = response.charging_time,
+          this.selectedStation.costPerHour = response.plugs[0].cost_per_kwh,
+          this.selectedStation.socketType = response.plugs[0].socket_type,
+          
+          this.starting_location = [station.location[0], station.location[1]];
+          this.singleStationDialogOpen = true;
         }
       })
       .catch(error => {
         console.error(error);
+        this.$q.notify({
+          color: 'negative',
+          message: 'Error while fetching station details',
+          position: 'top',
+          timeout: 3000,
+        });
       })
       .finally(() => {
         this.loading = false;
         this.chargingStationDialogOpen = false;
-        this.singleStationDialogOpen = true;
       }); 
     },
-    async startResearch() {
+    startResearch() {
       this.searchDialogOpen = true;
       this.chargingStationDialogOpen = false;
       this.singleStationDialogOpen = false;
@@ -222,6 +242,9 @@ export default defineComponent({
     navigateToStation() {
       console.log(`Navigating to ${this.selectedStation.name} at ${this.selectedStation.location[0]}, ${this.selectedStation.location[1]}`);
       this.singleStationDialogOpen = false;
+    },
+    setTotalDistance(totalDistance) {
+      this.selectedStation.distance = totalDistance.toFixed(2);
     },
   },
 });
