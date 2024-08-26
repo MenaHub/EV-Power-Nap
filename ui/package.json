@@ -14,8 +14,8 @@
     "deploy": "vercel"
   },
   "dependencies": {
+    "@aws-sdk/client-location": "^3.637.0",
     "@quasar/extras": "^1.16.4",
-    "aws-sdk": "^2.1667.0",
     "axios": "^1.2.1",
     "maplibre-gl": "^4.5.1",
     "quasar": "^2.16.0",

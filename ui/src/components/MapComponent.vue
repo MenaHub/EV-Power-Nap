@@ -4,24 +4,26 @@
 
 <script>
 import maplibregl from 'maplibre-gl';
-import AWS from 'aws-sdk';
+import { LocationClient, CalculateRouteCommand } from '@aws-sdk/client-location';
 
 export default {
   name: 'MapComponent',
   data() {
     return {
       map: null,
-      locationService: null,
+      locationClient: null,
     };
   },
   mounted() {
-    // Initialize AWS SDK
-    AWS.config.update({
+    const credentials = {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    };
+    
+    this.locationClient = new LocationClient({
       region: 'eu-west-1',
-      credentials: new AWS.Credentials(`${process.env.AWS_SECRET_ACCESS_KEY}`, `${process.env.AWS_SECRET_ACCESS_ID}`)
+      credentials: credentials,
     });
-
-    this.locationService = new AWS.Location();
 
     const apiKey = `${process.env.AWS_API_KEY}`;
     const mapName = "powernap";
@@ -50,7 +52,7 @@ export default {
       }
 
       // Define coordinates for pins
-      console.log("starting_point: ", this.starting_location);
+      //console.log("starting_point: ", this.starting_location);
       const pins = [this.starting_location];
 
       // Define the target destination
@@ -68,19 +70,17 @@ export default {
         .setLngLat(targetPosition)
         .addTo(this.map);
 
-      // Calculate route from the first pin to the target position
-      this.locationService.calculateRoute({
+      const input = {
         CalculatorName: 'powernap',
         DeparturePosition: pins[0], // Using the first pin as the starting point
         DestinationPosition: targetPosition,
         TravelMode: 'Walking',
         DistanceUnit: 'Kilometers'
-      }, (err, data) => {
-        if (err) {
-          console.error('Error calculating route:', err);
-          return;
-        }
-
+      };
+      const calculateRouteCommand = new CalculateRouteCommand(input);
+      
+      this.locationClient.send(calculateRouteCommand)
+      .then((data) => {
         if (!data.Legs || !data.Legs.length) {
           console.error('No route legs found in the response');
           return;
@@ -122,11 +122,24 @@ export default {
         this.map.fitBounds([
           [Math.min(...coordinates.map(c => c[0])), Math.min(...coordinates.map(c => c[1]))],
           [Math.max(...coordinates.map(c => c[0])), Math.max(...coordinates.map(c => c[1]))]
-        ], { padding: 50 });
+        ], 
+          {
+            padding: {
+              top: 300,    // Increase this value to make more space at the top for the card
+              bottom: 50,  // Minimal padding at the bottom
+              left: 50,    // Optional: Adjust padding for the left side
+              right: 50    // Optional: Adjust padding for the right side
+            }
+          }
+        );
 
         // Calculate distance
         const totalDistance = data.Summary.Distance; // In kilometers
-        console.log(`Total distance to the target: ${totalDistance.toFixed(2)} km`);
+        //console.log(`Total distance to the target: ${totalDistance.toFixed(2)} km`);
+        this.$emit('totalDistance', totalDistance);
+      })
+      .catch((err) => {
+        console.error('Error calculating route:', err);
       });
     }
   },
@@ -152,8 +165,7 @@ export default {
       default: () => [11.356392, 46.49561]
     }
   }
-}
-</script>
+}</script>
 
 <style scoped>
 #map {
