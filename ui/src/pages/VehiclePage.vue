@@ -44,7 +44,7 @@ export default defineComponent({
     addVehicle() {
       this.vehicles.push({
         name: 'New Vehicle',
-        image: 'src/assets/tesla.png',
+        image: 'assets/tesla.png',
         socketType: 'Type X'
       });
     }
@@ -54,22 +54,22 @@ export default defineComponent({
       vehicles: [
         {
           name: 'Tesla Cybertruck',
-          image: 'src/assets/tesla.png',
+          image: 'assets/tesla.png',
           socketType: 'Type 1'
         },
         {
           name: 'Tesla Model S',
-          image: 'src/assets/tesla.png',
+          image: 'assets/tesla.png',
           socketType: 'Type 2'
         },
         {
           name: 'Tesla Model 3',
-          image: 'src/assets/tesla.png',
+          image: 'assets/tesla.png',
           socketType: 'Type 2'
         },
         {
           name: 'Tesla Model X',
-          image: 'src/assets/tesla.png',
+          image: 'assets/tesla.png',
           socketType: 'Type 2'
         },
       ]

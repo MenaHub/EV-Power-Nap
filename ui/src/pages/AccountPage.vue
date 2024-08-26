@@ -41,7 +41,7 @@
       <q-btn
         style="width: 80vw;"
         rounded
-        icon="img:src/assets/google-logo.png"
+        icon="img:assets/google-logo.png"
         label="Login with Google"
         @click="loginWithGoogle"
       />
