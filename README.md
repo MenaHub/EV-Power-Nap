@@ -1,28 +1,38 @@
-# PowerNap - EV Charging Stations Finder
+# PowerNap - EV Charging Station Finder
 
-Web/Mobile application to find the best EV charger based on distance from the destination, time of stay, charger speed, electricity costs, current battery level, and the desired one.
+PowerNap is an open-source web and mobile application designed to help users locate the optimal EV charging station based on factors such as proximity to the destination, duration of stay, charging speed, electricity costs, current battery level, and desired charge level.
 
-The algorithm uses a heuristic that allows calculating a score for each station as a weighted combination of some relevant information.
+This was a project we created in 24 hours as part of the [NOI Tech Park Summer 2024 Hackathon](https://hackathon.bz.it/project/powernap-1) in Scenna (BZ).
+The app utilizes a heuristic algorithm to assign a score to each station, taking into account a weighted combination of these factors to ensure users receive the best possible recommendations.
 
-Our public APIs offer an easy way to access useful information such as walking distance from the station to the destination, station location, charging costs, provider, socket type, maximum power output, and expected charging time.
+Our public APIs provide easy access to a range of information, including walking distance from the charging station to the destination, station location, charging costs, provider details, socket type, maximum power output, and estimated charging time. These APIs are based on the Open Data Hub Mobility, which you can explore [here](https://swagger.opendatahub.com/?url=https://mobility.api.opendatahub.com/v2/apispec).
 
-You can test out our APIs at [https://powernap.alberto.fun/{endpoint}](https://powernap.alberto.fun/{endpoint})
+Please note that the availability of charging stations is dependent on the data provided by these APIs, which may be limited, especially outside the South Tyrol area.
 
-where `{endpoint}` is one of the following:
+#### Take a look to our slides [here](./presentation-slides.pdf)
 
-### API Endpoints
+## Accessing the Web Application
+You can access the PowerNap website from both your mobile device and computer at: [https://ev-power-nap.vercel.app/map](https://ev-power-nap.vercel.app/map)
 
-- **GET** `/get-charging-station/?longitude={xx}&latitude={yy}` 
-  - Returns stations within a 2km radius
+## API Endpoints
 
-- **GET** `/get-locations/` 
-  - Returns a set of coordinates based on an address passed in JSON format in the body 
+You can test our APIs at [https://powernap.alberto.fun/{endpoint}](https://powernap.alberto.fun/{endpoint}), replacing `{endpoint}` with one of the following:
+
+- **GET** `/get-charging-station/?longitude=LONGITUDE&latitude=LATITUDE`
+  - Retrieves stations within a 2km radius.
+
+- **POST** `/get-locations/`
+  - Returns coordinates based on an address provided in JSON format in the request body.
   - Example: `{"address": "Via Milano, 5 Bolzano"}`
 
-- **GET** `/get-details-from-stations/?longitude={xx}&latitude={yy}&current_battery={cc}&desired_battery={bb}&station_id={aa}` 
-  - Where station id is one of the several retrieved from the `/get-charging-station` endpoint
+- **GET** `/get-details-from-stations/?longitude=LONGITUDE&latitude=LATITUDE&current_battery=CURRENT_PERCENTAGE&desired_battery=DESIRED_PERCENTAGE&station_id=STATION_ID`
+  - Retrieves details for a specific station identified by `station_id` from the `/get-charging-station` endpoint.
 
-## Install the dependencies
+## Installation
+
+To build the application locally and contribute to the codebase, you can open a pull request. The process is straightforward:
+
+Install the dependencies:
 ```bash
 yarn
 # or
@@ -33,28 +43,6 @@ npm install
 ```bash
 npm run dev
 ```
-
-### Lint the files
-```bash
-yarn lint
-# or
-npm run lint
-```
-
-### Format the files
-```bash
-yarn format
-# or
-npm run format
-```
-
-### Build the app for production
-```bash
-npm run build
-```
-
-### Customize the configuration
-See [Configuring quasar.config.js](https://v2.quasar.dev/quasar-cli-vite/quasar-config-js).
 
 ### Authors
 

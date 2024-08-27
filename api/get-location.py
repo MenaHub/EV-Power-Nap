@@ -3,12 +3,11 @@ import json
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError
 
 def lambda_handler(event, context):
-    # Get the address from the event
-    query_params = event.get('queryStringParameters', {})
-    address = str(query_params.get('address', "Via-Milano-5-Bolzano"))
-    address = address.replace("-", " ")
+    address = str(event.get('address', ""))
+    address = address.replace("-", "")
     if not address:
         return {
+            'input': address,
             'statusCode': 400,
             'body': json.dumps('Error: No address provided')
         }
@@ -30,15 +29,14 @@ def lambda_handler(event, context):
             
             return {
                 'statusCode': 200,
-                'body': json.dumps({
-                    'latitude': coordinates[0],
-                    'longitude': coordinates[1]
-                }
-                )
+                'body': coordinates
             }
         else:
             return {
                 'statusCode': 404,
+                'headers': {
+                    'Content-Type': 'application/json'
+                },
                 'body': json.dumps('No coordinates found for the provided address')
             }
 

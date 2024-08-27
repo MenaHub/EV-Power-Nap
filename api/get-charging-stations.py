@@ -52,9 +52,16 @@ class Response:
         self.longitude = self.departure_coordinates[0]
         self.latitude = self.departure_coordinates[1]
     
-    def api_response(self, limit=200, distance=1000):
+    def fake_api_response(self):
+        with open("/Users/acrescin/Desktop/noi-techpark/small_response.json", "r") as file:
+            SAMPLE_JSON = json.loads(file.read())
+        r = SAMPLE_JSON
+        data = r["data"]["EChargingPlug"]["stations"].items()
+        
+        return data
+    
+    def api_response(self, limit=10, distance=1000):
         URL = f"https://mobility.api.opendatahub.com/v2/tree/EChargingPlug?limit={limit}&offset=0&where=scoordinate.dlt.%28{distance}%2C{self.longitude}%2C{self.latitude}%2C4326%29&shownull=false&distinct=true"
-        print(URL)
         r = requests.get(URL).json()
         data = r["data"]["EChargingPlug"]["stations"].items()
         return data
@@ -69,6 +76,8 @@ class Response:
                     departure_coordinates = self.departure_coordinates,
                     destination_coordinates = station_coordinates
                 )
+                distance = random.uniform(0.5, 4)
+
                 provider = station_content["sorigin"]
                 plugs = []
                 for plug in station_content["smetadata"]["outlets"]:
@@ -97,10 +106,8 @@ class Response:
                     }}
             return stations
 
-def get_map_pins_and_heuristic(stations):
+def get_map_pins_and_heuristic(stations, current_battery, desired_battery):
     stop_duration = 10
-    battery_current = 20
-    battery_desired = 80
     heuristic_list = []
     for station in stations:
         distance = stations[station]['distance']
@@ -109,26 +116,53 @@ def get_map_pins_and_heuristic(stations):
             max_power = plug['max_power']
             cost_per_kwh = plug['cost_per_kwh']
             socket_compatibility = 1
-            rank = calculate_heuristic(station, distance, max_power, cost_per_kwh, socket_compatibility, stop_duration = stop_duration, battery_current = battery_current, battery_desired = battery_desired, weights = (1, 1, 1))
+            rank = calculate_heuristic(station, distance, max_power, cost_per_kwh, socket_compatibility, stop_duration = stop_duration, battery_current = current_battery, battery_desired = desired_battery, weights = (1, 1, 1))
             heuristic_list.append({
                 "location": location,
                 "rank": rank,
                 "station_id": station
             })
-    return (heuristic_list) #TODO: Sort by heuristic
+    return (heuristic_list)
 
 def lambda_handler(event, context):
     query_params = event.get('queryStringParameters', {})
-    
-    longitude = float(query_params.get('longitude', 11.324950653648349))
-    latitude = float(query_params.get('latitude', 46.494720780246034))
+
+    required_params = ['longitude', 'latitude', 'current_battery', 'desired_battery']
+    missing_params = [param for param in required_params if param not in query_params]
+
+    if missing_params:
+        return {
+            'statusCode': 422,
+            'body': json.dumps({'error': f'Missing parameters: {", ".join(missing_params)}'})
+        }
+
+    longitude = float(query_params['longitude'])
+    latitude = float(query_params['latitude'])
+    current_battery = float(query_params['current_battery'])
+    desired_battery = float(query_params['desired_battery'])
 
     departure_coordinates = [longitude, latitude]
     res = Response(departure_coordinates)
     stations = res.create_response()
-    return_obj = get_map_pins_and_heuristic(stations)
-    
-    return {
-        'statusCode': 200,
-        'body': return_obj
-    }
+
+    if stations:
+        return_obj = sorted(get_map_pins_and_heuristic(stations, current_battery, desired_battery), key=lambda x: x["rank"], reverse=True)
+        return {
+            'statusCode': 200,
+            'body': json.dumps(return_obj),
+            'headers': {
+                    'Access-Control-Allow-Headers': 'Content-Type',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
+            }
+        }
+    else:
+        return {
+            'statusCode': 400,
+            'body': json.dumps("The specified set of locations did not find any station."),
+            'headers': {
+                    'Access-Control-Allow-Headers': 'Content-Type',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
+            }
+        }
