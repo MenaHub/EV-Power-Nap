@@ -50,7 +50,7 @@ module.exports = configure(function (/* ctx */) {
         node: 'node20'
       },
 
-      vueRouterMode: 'history', // available values: 'hash', 'history'
+      vueRouterMode: 'hash', // available values: 'hash', 'history'
       // vueRouterBase,
       // vueDevtools,
       // vueOptionsAPI: false,
@@ -59,7 +59,6 @@ module.exports = configure(function (/* ctx */) {
 
       // publicPath: '/',
       // analyze: true,
-      // dotenv: true,
       env: require('dotenv').config().parsed
       // rawDefine: {}
       // ignorePublicFolder: true,
@@ -101,8 +100,8 @@ module.exports = configure(function (/* ctx */) {
 
       // Quasar plugins
       plugins: [
-        'BottomSheet',
         'Notify',
+        'Screen',
       ]
     },
 

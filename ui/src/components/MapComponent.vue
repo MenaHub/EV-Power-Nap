@@ -1,5 +1,8 @@
 <template>
-  <div id="map"></div>
+  <!-- id="map" is used to inject the Maplibre map -->
+  <div 
+    id="map"
+  ></div>
 </template>
 
 <script>
@@ -33,10 +36,9 @@ export default {
     this.map = new maplibregl.Map({
       container: "map",
       style: `https://maps.geo.${region}.amazonaws.com/maps/v0/maps/${mapName}/style-descriptor?key=${apiKey}`,
-      center: [11.340000, 46.495000], // Center around the route
+      center: [11.340000, 46.495000], // centered in Bolzano area for NOI techpark APIs reachability
       zoom: 14,
     });
-    this.map.addControl(new maplibregl.NavigationControl(), "top-left");
   },
   methods: {
     updateRoute() {
@@ -44,36 +46,13 @@ export default {
         console.error("Starting or target location not provided");
         return;
       }
-
-      // Clear existing markers and route
-      if (this.map.getSource('route')) {
-        this.map.removeLayer('route');
-        this.map.removeSource('route');
-      }
-
-      // Define coordinates for pins
-      //console.log("starting_point: ", this.starting_location);
-      const pins = [this.starting_location];
-
-      // Define the target destination
-      const targetPosition = this.target_location;
-
-      // Add pins to the map
-      pins.forEach(position => {
-        new maplibregl.Marker()
-          .setLngLat(position)
-          .addTo(this.map);
-      });
-
-      // Add a pin for the target destination
-      new maplibregl.Marker({ color: 'red' })
-        .setLngLat(targetPosition)
-        .addTo(this.map);
+      
+      this.clearExistingRoutesIfAny();
 
       const input = {
         CalculatorName: 'powernap',
-        DeparturePosition: pins[0], // Using the first pin as the starting point
-        DestinationPosition: targetPosition,
+        DeparturePosition: this.starting_location,
+        DestinationPosition: this.target_location,
         TravelMode: 'Walking',
         DistanceUnit: 'Kilometers'
       };
@@ -118,22 +97,21 @@ export default {
           }
         });
 
-        // Fit the map view to the route
         this.map.fitBounds([
           [Math.min(...coordinates.map(c => c[0])), Math.min(...coordinates.map(c => c[1]))],
           [Math.max(...coordinates.map(c => c[0])), Math.max(...coordinates.map(c => c[1]))]
         ], 
           {
             padding: {
-              top: 300,    // Increase this value to make more space at the top for the card
-              bottom: 50,  // Minimal padding at the bottom
-              left: 50,    // Optional: Adjust padding for the left side
-              right: 50    // Optional: Adjust padding for the right side
-            }
+              top: 250,
+              bottom: 100,
+              left: 100,
+              right: 100
+            }, 
+            maxZoom: this.$q.screen.lt.sm ? 15 : 14
           }
         );
 
-        // Calculate distance
         const totalDistance = data.Summary.Distance; // In kilometers
         //console.log(`Total distance to the target: ${totalDistance.toFixed(2)} km`);
         this.$emit('totalDistance', totalDistance);
@@ -141,17 +119,32 @@ export default {
       .catch((err) => {
         console.error('Error calculating route:', err);
       });
+    },
+    clearExistingRoutesIfAny(){
+      if (this.map.getSource('route')) {
+        this.map.removeLayer('route');
+        this.map.removeSource('route');
+      }
     }
   },
   watch: {
     starting_location(newVal) {
       if (newVal && this.target_location.length > 0) {
         this.updateRoute();
+      } else {
+        this.clearExistingRoutesIfAny();
       }
     },
     target_location(newVal) {
       if (newVal && this.starting_location.length > 0) {
         this.updateRoute();
+      } else {
+        this.clearExistingRoutesIfAny();
+      }
+    },
+    cleanMap(newVal, oldVal) {
+      if (newVal && newVal !== oldVal) {
+        this.clearExistingRoutesIfAny();
       }
     }
   },
@@ -163,13 +156,30 @@ export default {
     target_location: {
       type: Array,
       default: () => [11.356392, 46.49561]
-    }
-  }
-}</script>
+    },
+    cleanMap: {
+      type: Boolean,
+      default: false
+    },
+  },
+  // computed: {
+  //   mapStyle() {
+  //     return {
+  //       position: 'absolute',
+  //       top: '0',
+  //       bottom: `0`,
+  //       left: '0',
+  //       right: '0'
+  //     };
+  //   }
+  // },
+}
+
+</script>
 
 <style scoped>
 #map {
-  height: 100vh;
-  margin: 0;
+  position: relative;
+  inset: 0;
 }
 </style>

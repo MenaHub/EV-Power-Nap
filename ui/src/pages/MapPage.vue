@@ -1,9 +1,12 @@
 <template>
-  <q-page class="flex flex-center">
-    <MapComponent 
-      class="full-width" 
+  <q-page 
+    :style-fn="pageStyle"
+  >
+    <MapComponent
+      class="full-width"
       :starting_location="starting_location" 
-      :target_location="target_location" 
+      :target_location="target_location"
+      :cleanMap="cleanMap"
       @totalDistance="setTotalDistance"
     /> 
     <q-btn
@@ -11,12 +14,12 @@
       round
       icon="add"
       color="primary"
-      class="fixed-bottom-right"
+      :style="buttonStyle"
       @click="startResearch"
     />
 
     <q-dialog v-model="searchDialogOpen">
-      <q-card style="width:90vw; border-radius: 20px">
+      <q-card style="width:90vw; border-radius: 10px">
         <q-card-section>
           <div class="text-h6">Search for the best charging station</div>
         </q-card-section>
@@ -26,6 +29,7 @@
             v-model="chargeInfo.currentBatteryLevel"
             label="Current Battery Level"
             type="number"
+            :disable="loading"
             lazy-rules
             :rules="[(val) => val >= 0 && val <= 100 || 'Invalid value']"
           />
@@ -34,20 +38,26 @@
             v-model="chargeInfo.desiredBatteryLevel"
             label="Desired Battery Level"
             type="number"
+            :disable="loading"
             lazy-rules
             :rules="[(val) => ((val >= 0 && val <= 100 && val > +chargeInfo.currentBatteryLevel) || !chargeInfo.currentBatteryLevel) || 'Invalid value']"
           />
           <q-input
             v-model="chargeInfo.destination"
+            clearable
             label="Destination"
+            error-message="Enter a valid address or city"
+            :error="destinationError"
+            :disable="loading"
           />
         </q-card-section>
         <q-card-actions align="right" class="q-mb-sm q-mr-sm">
           <q-btn
+            flat
             rounded
             label="Cancel"
             color="primary"
-            :loading="loading"
+            :disable="loading"
             @click="searchDialogOpen = false"
           />
           <q-btn
@@ -62,52 +72,62 @@
       </q-card>
     </q-dialog>
 
-    <q-dialog v-model="chargingStationDialogOpen" >
-      <q-card class="fixed-top-right" style="width: 90vw; border-radius: 20px;">
-        <q-card-section>
-          <div class="text-bold text-h5">Charging Stations</div>
-        </q-card-section>
-        <q-card-section>
-          <q-list>
-            <q-item v-for="(station, index) in chargingStations" :key="index">
-              <q-item-section>
-                <q-item-label class="text-h6">{{ station.station_id }}</q-item-label>
-              </q-item-section>
-              <q-item-section side>
-                <q-btn
-                  rounded
-                  label="Details"
-                  color="primary"
-                  :loading="loading"
-                  @click="getStationDetails(station)"
-                />
-              </q-item-section>
-            </q-item>
-          </q-list>
+    <q-dialog v-model="chargingStationDialogOpen">
+      <q-card class="fixed-top">
+        <q-card-section class="q-gutter-y-md">
+          <div class="text-bold" style="font-size: 1.5rem;">Charging Stations</div>
+          <div class="q-gutter-y-md">
+            <div class="row" v-for="(station, index) in chargingStations" :key="index">
+              <div class="col text-h6">{{ station.station_id }}</div>
+              <q-btn
+                flat
+                rounded
+                icon="arrow_forward"
+                color="primary"
+                :loading="loadingStation === station.station_id"
+                :disable="loadingStation !== null && loadingStation !== station.station_id"
+                @click="getStationDetails(station)"
+              />     
+            </div>
+          </div>
         </q-card-section>
       </q-card>
     </q-dialog>
 
     <q-dialog v-model="singleStationDialogOpen" seamless>
-      <q-card style="width: 90vw; border-radius: 20px;" class="fixed-top-right">
-        <q-card-section>
-          <div class="text-bold text-h5">{{ selectedStation.name }}</div>
+      <q-card class="fixed-top">
+        <q-card-section class="row flex items-center justify-between q-gutter-sm card-section">
+          <div class="col text-bold" align="center" style="font-size: 1.5rem;">{{ selectedStation.name }}</div>
+          <div class="col card-details flex justify-center">
+            <div>
+              <div>Provider: {{ selectedStation.provider }}</div>
+              <div>Distance: {{ selectedStation.distance }} km</div>
+              <div>Charging time: {{ selectedStation.chargingTime }} mins</div>
+              <div>Cost per hour: {{ selectedStation.costPerHour }} €</div>
+              <div>Socket type: {{ selectedStation.socketType }}</div>
+            </div>
+          </div>
+          <div class="col" align="center" style="row-gap: 0.5rem;">
+            <div class="row q-gutter-sm justify-center">
+              <q-btn 
+                class="col"
+                rounded
+                label="go back"
+                color="red"
+                @click="goBack"
+                style="min-width: fit-content"
+              />
+              <q-btn
+                class="col"
+                rounded
+                label="Navigate"
+                color="primary"
+                @click="navigateToStation"
+                style="min-width: fit-content"
+              />
+              </div>
+          </div>
         </q-card-section>
-        <q-card-section>
-          <div class="text-h6">Provider: {{ selectedStation.provider }}</div>
-          <div class="text-h6">Distance: {{ selectedStation.distance }} km</div>
-          <div class="text-h6">Charging time: {{ selectedStation.chargingTime }} mins</div>
-          <div class="text-h6">Cost per hour: {{ selectedStation.costPerHour }} €</div>
-          <div class="text-h6">Socket type: {{ selectedStation.socketType }}</div>
-        </q-card-section>
-        <q-card-actions align="right" class="q-mb-sm q-mr-sm">
-          <q-btn
-            rounded
-            label="Navigate"
-            color="primary"
-            @click="navigateToStation"
-          />
-        </q-card-actions>
       </q-card>
     </q-dialog>
   </q-page>
@@ -120,6 +140,9 @@ export default defineComponent({
   name: 'MapPage',
   data() {
     return {
+      destinationError: false,
+      cleanMap: false,
+      offset: 0,
       chargeInfo: {
         currentBatteryLevel: '',
         desiredBatteryLevel: '',
@@ -128,6 +151,7 @@ export default defineComponent({
       searchDialogOpen: false,
       chargingStationDialogOpen: false,
       singleStationDialogOpen: false,
+      loadingStation: null,
       chargingStations: [],
       selectedStation: {
         name: '',
@@ -146,10 +170,31 @@ export default defineComponent({
   components: {
     MapComponent
   },
+  mounted() {
+    this.searchDialogOpen = false;
+    this.chargingStationDialogOpen = false;
+    this.singleStationDialogOpen = false;
+    this.starting_location = [];
+    this.target_location = [];
+  },
   methods: {
+    pageStyle(offset) {
+      this.offset = offset;
+      return {
+        minHeight: `none`,
+        position: 'relative',
+        top: '0',
+        right: '0',
+        left: '0',
+        bottom: `${this.offset}px`,
+      };
+    },
     async searchForChargingStations() {
       //console.log('Searching for charging stations');
       this.loading = true;
+      this.destinationError = false;
+      this.starting_location = [];
+      this.target_location = [];
       await this.$api.post('/get-location', {
         address: this.chargeInfo.destination.replaceAll(' ', '-').replaceAll(',', '')
       })
@@ -169,16 +214,12 @@ export default defineComponent({
             if(response.data){
               //console.log("get-charging-stations result: ", response.data);
               this.chargingStations = response.data;
+              this.searchDialogOpen = false;
               this.chargingStationDialogOpen = true;
             }
           })
           .catch(error => {
-            this.$q.notify({
-              color: 'negative',
-              message: 'Error while fetching charging stations',
-              position: 'top',
-              timeout: 3000,
-            });
+            this.destinationError = true;
             console.error(error);
           });
         }
@@ -188,12 +229,12 @@ export default defineComponent({
       })
       .finally(() => {
         this.loading = false;
-        this.searchDialogOpen = false;
       });
     },
     async getStationDetails(station) {
       //console.log(`Navigating to ${station.station_id} at ${station.location[0]}, ${station.location[1]}`);
       this.loading = true;
+      this.loadingStation = station.station_id;
       await this.$api.get('/get-details-from-station', {
         params: {
           longitude: station.location[0],
@@ -212,7 +253,7 @@ export default defineComponent({
           this.selectedStation.location = [response.location.latitude, response.location.longitude],
           this.selectedStation.provider = response.provider,
           //distance: response.distance.toFixed(2),
-          this.selectedStation.chargingTime = response.charging_time,
+          this.selectedStation.chargingTime = response.charging_time.toFixed(0),
           this.selectedStation.costPerHour = response.plugs[0].cost_per_kwh,
           this.selectedStation.socketType = response.plugs[0].socket_type,
           
@@ -232,6 +273,7 @@ export default defineComponent({
       .finally(() => {
         this.loading = false;
         this.chargingStationDialogOpen = false;
+        this.loadingStation = null; 
       }); 
     },
     startResearch() {
@@ -240,26 +282,55 @@ export default defineComponent({
       this.singleStationDialogOpen = false;
     },
     navigateToStation() {
-      console.log(`Navigating to ${this.selectedStation.name} at ${this.selectedStation.location[0]}, ${this.selectedStation.location[1]}`);
-      this.singleStationDialogOpen = false;
+      const url = `https://www.google.com/maps/dir/${this.starting_location[1]},${this.starting_location[0]}/${this.target_location[1]},${this.target_location[0]}`;
+      window.open(url, '_blank');
     },
     setTotalDistance(totalDistance) {
       this.selectedStation.distance = totalDistance.toFixed(2);
     },
+    goBack(){
+      this.singleStationDialogOpen = false;
+      this.chargingStationDialogOpen = true;
+      this.cleanMap = true;
+    },
   },
+  computed: {
+    // pageStyle() {
+    //   return {
+    //     position: 'absolute',
+    //     top: '0',
+    //     right: '0',
+    //     left: '0',
+    //     bottom: `${this.offset}px`,
+    //   }
+    // },
+    buttonStyle(){
+      return {
+        bottom: `calc(${this.offset}px + 16px)`,
+        right: '16px',
+        position: 'fixed',
+      }
+    }
+  }
 });
 </script>
 
-<style>
-  .fixed-bottom-right {
-    position: fixed;
-    bottom: 10vh ;
-    right: 16px;
-  }
-  .fixed-top-right {
+<style scoped>
+.fixed-top {
     position: fixed;
     top: 5vh ;
     right: auto;
     left: auto;
+    height: fit-content;
+    border-radius: 10px;
+    width: 90vw;
   }
+
+.card-details div {
+  font-size: 1rem;
+  font-weight: 500;
+}
+.card-section > div {
+  min-width: fit-content;
+}
 </style>
